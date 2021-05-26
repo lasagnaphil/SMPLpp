@@ -1,25 +1,25 @@
 /* ========================================================================= *
  *                                                                           *
- *                                 SMPL++                                    *
+ *                                 STAR++                                    *
  *                    Copyright (c) 2018, Chongyi Zheng.                     *
  *                          All Rights reserved.                             *
  *                                                                           *
  * ------------------------------------------------------------------------- *
  *                                                                           *
- * This software implements a 3D human skinning model - SMPL: A Skinned      *
+ * This software implements a 3D human skinning model - STAR: A Skinned      *
  * Multi-Person Linear Model with C++.                                       *
  *                                                                           *
  * For more detail, see the paper published by Max Planck Institute for      *
  * Intelligent Systems on SIGGRAPH ASIA 2015.                                *
  *                                                                           *
  * We provide this software for research purposes only.                      *
- * The original SMPL model is available at http://smpl.is.tue.mpg.           *
+ * The original STAR model is available at http://smpl.is.tue.mpg.           *
  *                                                                           *
  * ========================================================================= */
 
 //=============================================================================
 //
-//  CLASS SMPL IMPLEMENTATIONS
+//  CLASS STAR IMPLEMENTATIONS
 //
 //=============================================================================
 
@@ -37,7 +37,7 @@
 //----------
 #include "definition/def.h"
 #include "toolbox/TorchEx.hpp"
-#include "smpl/SMPL.h"
+#include "smpl/STAR.h"
 //----------
 
 //===== EXTERNAL FORWARD DECLARATIONS =========================================
@@ -55,7 +55,7 @@ namespace smpl {
 
 //===== CLASS IMPLEMENTATIONS =================================================
 
-/**SMPL
+/**STAR
  * 
  * Brief
  * ----------
@@ -71,7 +71,7 @@ namespace smpl {
  * 
  * 
  */
-SMPL::SMPL() noexcept(true) :
+STAR::STAR() noexcept(true) :
     m__device(torch::kCPU),
     m__modelPath(),
     m__vertPath(),
@@ -89,7 +89,7 @@ SMPL::SMPL() noexcept(true) :
 {
 }
 
-/**SMPL (overload)
+/**STAR (overload)
  * 
  * Brief
  * ----------
@@ -107,7 +107,7 @@ SMPL::SMPL() noexcept(true) :
  * 
  * 
  */
-SMPL::SMPL(std::string &modelPath, 
+STAR::STAR(std::string &modelPath,
     std::string &vertPath, torch::Device &device) noexcept(false) :
     m__device(torch::kCPU),
     m__blender(),
@@ -119,7 +119,7 @@ SMPL::SMPL(std::string &modelPath,
         m__device = device;
     }
     else {
-        throw smpl_error("SMPL", "Failed to fetch device index!");
+        throw smpl_error("STAR", "Failed to fetch device index!");
     }
 
     std::experimental::filesystem::path path(modelPath);
@@ -128,11 +128,11 @@ SMPL::SMPL(std::string &modelPath,
         m__vertPath = vertPath;
     }
     else {
-        throw smpl_error("SMPL", "Failed to initialize model path!");
+        throw smpl_error("STAR", "Failed to initialize model path!");
     }
 }
 
-/**SMPL (overload)
+/**STAR (overload)
  * 
  * Brief
  * ----------
@@ -142,7 +142,7 @@ SMPL::SMPL(std::string &modelPath,
  * Arguments
  * ----------
  * 
- *      @smpl: - const SMPL& -
+ *      @smpl: - const STAR& -
  *          The <LinearBlendSkinning> instantiation to copy with.
  * 
  * 
@@ -151,7 +151,7 @@ SMPL::SMPL(std::string &modelPath,
  * 
  * 
  */
-SMPL::SMPL(const SMPL& smpl) noexcept(false) :
+STAR::STAR(const STAR& smpl) noexcept(false) :
     m__device(torch::kCPU)
 {
     try {
@@ -162,7 +162,7 @@ SMPL::SMPL(const SMPL& smpl) noexcept(false) :
     }
 }
 
-/**~SMPL
+/**~STAR
  * 
  * Brief
  * ----------
@@ -178,7 +178,7 @@ SMPL::SMPL(const SMPL& smpl) noexcept(false) :
  * 
  * 
  */
-SMPL::~SMPL() noexcept(true)
+STAR::~STAR() noexcept(true)
 {
 }
 
@@ -187,22 +187,22 @@ SMPL::~SMPL() noexcept(true)
  * Brief
  * ----------
  * 
- *      Assignment is used to copy a <SMPL> instantiation.
+ *      Assignment is used to copy a <STAR> instantiation.
  * 
  * Arguments
  * ----------
  * 
- *      @smpl: - const SMPL& -
- *          The <SMPL> instantiation to copy with.
+ *      @smpl: - const STAR& -
+ *          The <STAR> instantiation to copy with.
  * 
  * Return
  * ----------
  * 
- *      @this*: - SMPL & -
+ *      @this*: - STAR & -
  *          Current instantiation.
  * 
  */
-SMPL &SMPL::operator=(const SMPL& smpl) noexcept(false)
+STAR &STAR::operator=(const STAR& smpl) noexcept(false)
 {
     //
     // hard copy
@@ -211,7 +211,7 @@ SMPL &SMPL::operator=(const SMPL& smpl) noexcept(false)
         m__device = smpl.m__device;
     }
     else {
-        throw smpl_error("SMPL", "Failed to fetch device index!");
+        throw smpl_error("STAR", "Failed to fetch device index!");
     }
 
     std::experimental::filesystem::path path(smpl.m__modelPath);
@@ -219,7 +219,7 @@ SMPL &SMPL::operator=(const SMPL& smpl) noexcept(false)
         m__modelPath = smpl.m__modelPath;
     }
     else {
-        throw smpl_error("SMPL", "Failed to copy model path!");
+        throw smpl_error("STAR", "Failed to copy model path!");
     }
 
     try {
@@ -294,7 +294,7 @@ SMPL &SMPL::operator=(const SMPL& smpl) noexcept(false)
  * ----------
  * 
  */
-void SMPL::setDevice(const torch::Device &device) noexcept(false)
+void STAR::setDevice(const torch::Device &device) noexcept(false)
 {
     if (device.has_index()) {
         m__device = device;
@@ -304,7 +304,7 @@ void SMPL::setDevice(const torch::Device &device) noexcept(false)
         m__skinner.setDevice(device);
     }
     else {
-        throw smpl_error("SMPL", "Failed to fetch device index!");
+        throw smpl_error("STAR", "Failed to fetch device index!");
     }
 
     return;
@@ -328,14 +328,14 @@ void SMPL::setDevice(const torch::Device &device) noexcept(false)
  * 
  * 
  */
-void SMPL::setModelPath(const std::string &modelPath) noexcept(false)
+void STAR::setModelPath(const std::string &modelPath) noexcept(false)
 {
     std::experimental::filesystem::path path(modelPath);
     if (std::experimental::filesystem::exists(path)) {
         m__modelPath = modelPath;
     }
     else {
-        throw smpl_error("SMPL", "Failed to initialize model path!");
+        throw smpl_error("STAR", "Failed to initialize model path!");
     }
 
     return;
@@ -359,7 +359,7 @@ void SMPL::setModelPath(const std::string &modelPath) noexcept(false)
  * 
  * 
  */
-void SMPL::setVertPath(const std::string &vertexPath) noexcept(false)
+void STAR::setVertPath(const std::string &vertexPath) noexcept(false)
 {
     m__vertPath = vertexPath;
 
@@ -384,7 +384,7 @@ void SMPL::setVertPath(const std::string &vertexPath) noexcept(false)
  *          Deformed shape in rest pose, (N, 6890, 3)
  * 
  */
-torch::Tensor SMPL::getRestShape() noexcept(false)
+torch::Tensor STAR::getRestShape() noexcept(false)
 {
     torch::Tensor restShape;
     
@@ -416,7 +416,7 @@ torch::Tensor SMPL::getRestShape() noexcept(false)
  *          Vertex indices of each face (triangles), (13776, 3).
  * 
  */
-torch::Tensor SMPL::getFaceIndex() noexcept(false)
+torch::Tensor STAR::getFaceIndex() noexcept(false)
 {
     torch::Tensor faceIndices;
     if (m__faceIndices.sizes() !=
@@ -425,7 +425,7 @@ torch::Tensor SMPL::getFaceIndex() noexcept(false)
         faceIndices = m__faceIndices.clone().to(m__device);
     }
     else {
-        throw smpl_error("SMPL", "Failed to get face indices!");
+        throw smpl_error("STAR", "Failed to get face indices!");
     }
 
     return faceIndices;
@@ -449,7 +449,7 @@ torch::Tensor SMPL::getFaceIndex() noexcept(false)
  *          Joint locations of the deformed mesh in rest pose, (N, 24, 3).
  * 
  */
-torch::Tensor SMPL::getRestJoint() noexcept(false)
+torch::Tensor STAR::getRestJoint() noexcept(false)
 {
     torch::Tensor joints;
     
@@ -481,7 +481,7 @@ torch::Tensor SMPL::getRestJoint() noexcept(false)
  *          Vertex locations of the deformed mesh, (N, 6890, 3).
  * 
  */
-torch::Tensor SMPL::getVertex() noexcept(false)
+torch::Tensor STAR::getVertex() noexcept(false)
 {
     torch::Tensor vertices;
 
@@ -513,7 +513,7 @@ torch::Tensor SMPL::getVertex() noexcept(false)
  * 
  * 
  */
-void SMPL::init() noexcept(false)
+void STAR::init() noexcept(false)
 {
     std::experimental::filesystem::path path(m__modelPath);
     if (std::experimental::filesystem::exists(path)) {
@@ -545,7 +545,7 @@ void SMPL::init() noexcept(false)
         m__shapeBlendBasis = torch::from_blob(shapeBlendShapes.data<float>(),
                                               {VERTEX_NUM, 3, SHAPE_BASIS_DIM}).to(m__device);// (6890, 3, 10)
         m__poseBlendBasis = torch::from_blob(poseBlendShapes.data<float>(),
-                                             {VERTEX_NUM, 3, SMPL_POSE_BASIS_DIM}).to(m__device);// (6890, 3, 207)
+                                             {VERTEX_NUM, 3, SMPL_POSE_BASIS_DIM}).to(m__device);// (6890, 3, 93)
 
         // regressor
         auto& templateRestShape = data["v_template"];
@@ -578,7 +578,7 @@ void SMPL::init() noexcept(false)
             {VERTEX_NUM, JOINT_NUM}).to(m__device);// (6890, 24)
     }
     else {
-        throw smpl_error("SMPL", "Cannot initialize a SMPL model!");
+        throw smpl_error("STAR", "Cannot initialize a STAR model!");
     }
 
     return;
@@ -610,14 +610,14 @@ void SMPL::init() noexcept(false)
  * 
  * 
  */
-void SMPL::launch(
+void STAR::launch(
     torch::Tensor &beta, 
     torch::Tensor &theta) noexcept(false)
 {
     if (beta.sizes() != torch::IntArrayRef({BATCH_SIZE, SHAPE_BASIS_DIM})
         && theta.sizes() != torch::IntArrayRef({BATCH_SIZE, JOINT_NUM, 3})) {
 
-        throw smpl_error("SMPL", "Cannot launch a SMPL model!");
+        throw smpl_error("STAR", "Cannot launch a STAR model!");
     }
 
     try {
@@ -693,7 +693,7 @@ void SMPL::launch(
  * 
  * 
  */
-void SMPL::out(int64_t index) noexcept(false)
+void STAR::out(int64_t index) noexcept(false)
 {
     torch::Tensor vertices = 
         m__skinner.getVertex().clone().to(m__device);// (N, 6890, 3)
@@ -728,7 +728,7 @@ void SMPL::out(int64_t index) noexcept(false)
         }
     }
     else {
-        throw smpl_error("SMPL", "Cannot export the deformed mesh!");
+        throw smpl_error("STAR", "Cannot export the deformed mesh!");
     }
 
     return;

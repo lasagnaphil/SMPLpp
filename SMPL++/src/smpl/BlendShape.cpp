@@ -136,7 +136,7 @@ BlendShape::BlendShape(torch::Tensor &shapeBlendBasis,
     }
 
     if (poseBlendBasis.sizes() == 
-        torch::IntArrayRef({VERTEX_NUM, 3, POSE_BASIS_DIM})) {
+        torch::IntArrayRef({VERTEX_NUM, 3, SMPL_POSE_BASIS_DIM})) {
         m__poseBlendBasis = poseBlendBasis.clone().to(m__device);
     }
     else {
@@ -236,7 +236,7 @@ BlendShape &BlendShape::operator=(const BlendShape &blendShape) noexcept(false)
     }
 
     if (blendShape.m__poseBlendBasis.sizes() == 
-        torch::IntArrayRef({VERTEX_NUM, 3, POSE_BASIS_DIM})) {
+        torch::IntArrayRef({VERTEX_NUM, 3, SMPL_POSE_BASIS_DIM})) {
         m__poseBlendBasis = blendShape.m__poseBlendBasis.clone().to(m__device);
     }
     else {
@@ -467,7 +467,7 @@ void BlendShape::setPoseBlendBasis(const torch::Tensor &poseBlendBasis)
     noexcept(false)
 {
     if (poseBlendBasis.sizes() == 
-        torch::IntArrayRef({VERTEX_NUM, 3, POSE_BASIS_DIM})) {
+        torch::IntArrayRef({VERTEX_NUM, 3, SMPL_POSE_BASIS_DIM})) {
         m__poseBlendBasis = poseBlendBasis.clone().to(m__device);
     }
     else {
@@ -756,7 +756,7 @@ void BlendShape::poseBlend() noexcept(false)
     // pose blend
     //
     if (m__poseBlendBasis.sizes() == 
-        torch::IntArrayRef({VERTEX_NUM, 3, POSE_BASIS_DIM})) {
+        torch::IntArrayRef({VERTEX_NUM, 3, SMPL_POSE_BASIS_DIM})) {
         m__poseBlendShape = torch::tensordot(
             poseBlendCoeffs, m__poseBlendBasis, {1}, {2});// (N, 6890, 3)
     }

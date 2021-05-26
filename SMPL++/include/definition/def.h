@@ -68,9 +68,14 @@
 #define SHAPE_BASIS_DIM smpl::shape_basis_dim
 #endif // SHAPE_BASIS_DIM
 
-#ifndef POSE_BASIS_DIM
-#define POSE_BASIS_DIM smpl::pose_basis_dim
-#endif // POSE_BASIS_DIM
+#ifndef SMPL_POSE_BASIS_DIM
+#define SMPL_POSE_BASIS_DIM smpl::smpl_pose_basis_dim
+#endif // SMPL_POSE_BASIS_DIM
+
+#ifndef STAR_POSE_BASIS_DIM
+#define STAR_POSE_BASIS_DIM smpl::star_pose_basis_dim
+#endif // STAR_POSE_BASIS_DIM
+
 
 #ifndef FACE_INDEX_NUM
 #define FACE_INDEX_NUM smpl::face_index_num
@@ -96,7 +101,8 @@ extern int64_t batch_size;// 256
 extern int64_t vertex_num;// 6890
 extern const int64_t joint_num;// 24
 extern const int64_t shape_basis_dim;// 10
-extern const int64_t pose_basis_dim;// 207
+extern const int64_t smpl_pose_basis_dim;// 207
+extern const int64_t star_pose_basis_dim;// 93
 extern const int64_t face_index_num;// 13776
 
 //=============================================================================
