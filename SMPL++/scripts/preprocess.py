@@ -15,17 +15,12 @@
 # data and write them in to numpy and json format.
 #
 # =============================================================================
-#!/usr/bin/python2
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+#!/usr/bin/python3
 
 import sys
 import os
 import numpy as np
 import pickle as pkl
-import json
 
 
 def main(args):
@@ -46,10 +41,10 @@ def main(args):
 
     if gender == 'female':
         NP_SAVE_FILE = 'smpl_female.npz'
-        JSON_SVAE_FILE = 'smpl_female.json'
     elif gender == 'male':
         NP_SAVE_FILE = 'smpl_male.npz'
-        JSON_SVAE_FILE = 'smpl_male.json'
+    elif gender == 'neutral':
+        NP_SAVE_FILE = 'smpl_neutral.npz'
     else:
         raise SystemError('Please specify gender of the model!\n'
                           'USAGE: \'*f*.pkl\' - female, '
@@ -59,7 +54,6 @@ def main(args):
         os.makedirs(save_dir)
 
     np_save_path = os.path.join(save_dir, NP_SAVE_FILE)
-    json_save_path = os.path.join(save_dir, JSON_SVAE_FILE)
 
     # * Model Data Description * #
     # vertices_template: global vertex locations of template - (6890, 3)
@@ -85,7 +79,7 @@ def main(args):
     # vert_sym_idxs: symmetrical corresponding vertex indices - (6890, )
     # weights_prior: prior weights for linear blend skinning
     with open(raw_model_path, 'rb') as f:
-        raw_model_data = pkl.load(f)
+        raw_model_data = pkl.load(f, encoding='latin1')
     vertices_template = np.array(raw_model_data['v_template'])
     face_indices = np.array(raw_model_data['f'] + 1)  # starts from 1
     weights = np.array(raw_model_data['weights'])
@@ -95,35 +89,21 @@ def main(args):
     kinematic_tree = np.array(raw_model_data['kintree_table'])
 
     model_data_np = {
-        'vertices_template': vertices_template,
-        'face_indices': face_indices,
+        'v_template': vertices_template,
+        'f': face_indices,
         'weights': weights,
-        'shape_blend_shapes': shape_blend_shapes,
-        'pose_blend_shapes': pose_blend_shapes,
-        'joint_regressor': joint_regressor,
-        'kinematic_tree': kinematic_tree
-    }
-
-    # Data must be converted to list before storing as json.
-    model_data_json = {
-        'vertices_template': vertices_template.tolist(),
-        'face_indices': face_indices.tolist(),
-        'weights': weights.tolist(),
-        'shape_blend_shapes': shape_blend_shapes.tolist(),
-        'pose_blend_shapes': pose_blend_shapes.tolist(),
-        'joint_regressor': joint_regressor.tolist(),
-        'kinematic_tree': kinematic_tree.tolist()
+        'shapedirs': shape_blend_shapes,
+        'posedirs': pose_blend_shapes,
+        'J_regressor': joint_regressor,
+        'kintree_table': kinematic_tree
     }
 
     np.savez(np_save_path, **model_data_np)
-    with open(json_save_path, 'wb+') as f:
-        json.dump(model_data_json, f, indent=4, sort_keys=True)
-
     print('Save SMPL Model to: ', os.path.abspath(save_dir))
 
 
 if __name__ == '__main__':
-    if sys.version_info[0] != 2:
+    if sys.version_info[0] != 3:
         raise EnvironmentError('Run this file with Python2!')
     if len(sys.argv) < 4:
         raise SystemError('Too few arguments!\n'
