@@ -33,9 +33,7 @@
 #include <fstream>
 #include <experimental/filesystem>
 //----------
-#include <xtensor/xarray.hpp>
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xjson.hpp>
+#include "cnpy.h"
 //----------
 #include "definition/def.h"
 #include "toolbox/TorchEx.hpp"
@@ -84,7 +82,6 @@ SMPL::SMPL() noexcept(true) :
     m__jointRegressor(),
     m__kinematicTree(),
     m__weights(),
-    m__model(),
     m__blender(),
     m__regressor(),
     m__transformer(),
@@ -113,7 +110,6 @@ SMPL::SMPL() noexcept(true) :
 SMPL::SMPL(std::string &modelPath, 
     std::string &vertPath, torch::Device &device) noexcept(false) :
     m__device(torch::kCPU),
-    m__model(),
     m__blender(),
     m__regressor(),
     m__transformer(),
@@ -229,7 +225,6 @@ SMPL &SMPL::operator=(const SMPL& smpl) noexcept(false)
     try {
         m__vertPath = smpl.m__vertPath;
 
-        m__model = smpl.m__model;
         m__blender = smpl.m__blender;
         m__regressor = smpl.m__regressor;
         m__transformer = smpl.m__transformer;
@@ -522,49 +517,64 @@ void SMPL::init() noexcept(false)
 {
     std::experimental::filesystem::path path(m__modelPath);
     if (std::experimental::filesystem::exists(path)) {
-        std::ifstream file(path);
-        file >> m__model;
+        auto data = cnpy::npz_load(path);
 
         //
         // data loading
         //
         // face indices
-        xt::xarray<int32_t> faceIndices;
-        xt::from_json(m__model["face_indices"], faceIndices);
-        m__faceIndices = torch::from_blob(faceIndices.data(),
-            {FACE_INDEX_NUM, 3}, torch::kInt32).clone().to(
+        auto& faceIndices = data["f"];
+        assert(faceIndices.shape.size() == 2);
+        assert(faceIndices.shape[0] == FACE_INDEX_NUM);
+        assert(faceIndices.shape[1] == 3);
+        m__faceIndices = torch::from_blob(faceIndices.data<int32_t>(),
+                                          {FACE_INDEX_NUM, 3}, torch::kInt32).clone().to(
                 m__device);
 
         // blender
-        xt::xarray<float> shapeBlendBasis;
-        xt::xarray<float> poseBlendBasis;
-        xt::from_json(m__model["shape_blend_shapes"], shapeBlendBasis);
-        xt::from_json(m__model["pose_blend_shapes"], poseBlendBasis);
-        m__shapeBlendBasis = torch::from_blob(shapeBlendBasis.data(),
-            {VERTEX_NUM, 3, SHAPE_BASIS_DIM}).to(m__device);// (6890, 3, 10)
-        m__poseBlendBasis = torch::from_blob(poseBlendBasis.data(),
-            {VERTEX_NUM, 3, POSE_BASIS_DIM}).to(m__device);// (6890, 3, 207)
+        auto& shapeBlendShapes = data["shapedirs"];
+        assert(shapeBlendShapes.shape.size() == 3);
+        assert(shapeBlendShapes.shape[0] == VERTEX_NUM);
+        assert(shapeBlendShapes.shape[1] == 3);
+        assert(shapeBlendShapes.shape[2] == SHAPE_BASIS_DIM);
+        auto& poseBlendShapes = data["posedirs"];
+        assert(poseBlendShapes.shape.size() == 3);
+        assert(poseBlendShapes.shape[0] == VERTEX_NUM);
+        assert(poseBlendShapes.shape[1] == 3);
+        assert(poseBlendShapes.shape[2] == POSE_BASIS_DIM);
+        m__shapeBlendBasis = torch::from_blob(shapeBlendShapes.data<float>(),
+                                              {VERTEX_NUM, 3, SHAPE_BASIS_DIM}).to(m__device);// (6890, 3, 10)
+        m__poseBlendBasis = torch::from_blob(poseBlendShapes.data<float>(),
+                                             {VERTEX_NUM, 3, POSE_BASIS_DIM}).to(m__device);// (6890, 3, 207)
 
         // regressor
-        xt::xarray<float> templateRestShape;
-        xt::xarray<float> jointRegressor;
-        xt::from_json(m__model["vertices_template"], templateRestShape);
-        xt::from_json(m__model["joint_regressor"], jointRegressor);
-        m__templateRestShape = torch::from_blob(templateRestShape.data(),
+        auto& templateRestShape = data["v_template"];
+        assert(templateRestShape.shape.size() == 2);
+        assert(templateRestShape.shape[0] == VERTEX_NUM);
+        assert(templateRestShape.shape[1] == 3);
+        auto& jointRegressor = data["J_regressor"];
+        assert(jointRegressor.shape.size() == 2);
+        assert(jointRegressor.shape[0] == JOINT_NUM);
+        assert(jointRegressor.shape[1] == VERTEX_NUM);
+        m__templateRestShape = torch::from_blob(templateRestShape.data<float>(),
             {VERTEX_NUM, 3}).to(m__device);// (6890, 3)
-        m__jointRegressor = torch::from_blob(jointRegressor.data(),
+        m__jointRegressor = torch::from_blob(jointRegressor.data<float>(),
             {JOINT_NUM, VERTEX_NUM}).to(m__device);// (24, 6890)
 
         // transformer
-        xt::xarray<int64_t> kinematicTree;
-        xt::from_json(m__model["kinematic_tree"], kinematicTree);
-        m__kinematicTree = torch::from_blob(kinematicTree.data(),
+        auto& kinematicTree = data["kintree_table"];
+        assert(kinematicTree.shape.size() == 2);
+        assert(kinematicTree.shape[0] == 2);
+        assert(kinematicTree.shape[1] == JOINT_NUM);
+        m__kinematicTree = torch::from_blob(kinematicTree.data<int64_t>(),
             {2, JOINT_NUM}, torch::kInt64).to(m__device);// (2, 24)
 
         // skinner
-        xt::xarray<float> weights;
-        xt::from_json(m__model["weights"], weights);
-        m__weights = torch::from_blob(weights.data(),
+        auto& weights = data["weights"];
+        assert(weights.shape.size() == 2);
+        assert(weights.shape[0] == VERTEX_NUM);
+        assert(weights.shape[1] == JOINT_NUM);
+        m__weights = torch::from_blob(weights.data<float>(),
             {VERTEX_NUM, JOINT_NUM}).to(m__device);// (6890, 24)
     }
     else {
@@ -604,12 +614,9 @@ void SMPL::launch(
     torch::Tensor &beta, 
     torch::Tensor &theta) noexcept(false)
 {
-    if (m__model.is_null()
-        && beta.sizes() !=
-            torch::IntArrayRef({BATCH_SIZE, SHAPE_BASIS_DIM})
-        && theta.sizes() != 
-            torch::IntArrayRef({BATCH_SIZE, JOINT_NUM, 3})
-        ) {
+    if (beta.sizes() != torch::IntArrayRef({BATCH_SIZE, SHAPE_BASIS_DIM})
+        && theta.sizes() != torch::IntArrayRef({BATCH_SIZE, JOINT_NUM, 3})) {
+
         throw smpl_error("SMPL", "Cannot launch a SMPL model!");
     }
 
@@ -702,30 +709,22 @@ void SMPL::out(int64_t index) noexcept(false)
 
         torch::Tensor slice_ = TorchEx::indexing(vertices,
             torch::IntList({index}));// (6890, 3)
-        xt::xarray<float> slice = xt::adapt(
-            (float *)slice_.to(torch::kCPU).data_ptr(),
-            xt::xarray<float>::shape_type({(const size_t)VERTEX_NUM, 3})
-        );
-        
-        xt::xarray<int32_t> faceIndices;
-        faceIndices = xt::adapt(
-            (int32_t *)m__faceIndices.to(torch::kCPU).data_ptr(),
-            xt::xarray<int32_t>::shape_type(
-                {(const size_t)FACE_INDEX_NUM, 3})
-        );
+
+        auto slice = slice_.accessor<float, 2>();
+        auto faceIndices = m__faceIndices.accessor<int32_t, 2>();
 
         for (int64_t i = 0; i < VERTEX_NUM; i++) {
             file << 'v' << ' '
-                << slice(i, 0) << ' '
-                << slice(i, 1) << ' ' 
-                << slice(i, 2) << '\n';
+                << slice[i][0] << ' '
+                << slice[i][1] << ' '
+                << slice[i][2] << '\n';
         }
 
         for (int64_t i = 0; i < FACE_INDEX_NUM; i++) {
             file << 'f' << ' '
-                << faceIndices(i, 0) << ' '
-                << faceIndices(i, 1) << ' '
-                << faceIndices(i, 2) << '\n';
+                << faceIndices[i][0] << ' '
+                << faceIndices[i][1] << ' '
+                << faceIndices[i][2] << '\n';
         }
     }
     else {

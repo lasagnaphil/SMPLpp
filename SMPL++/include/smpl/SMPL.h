@@ -34,7 +34,6 @@
 //----------
 #include <string>
 //----------
-#include <nlohmann/json.hpp>
 #include <torch/torch.h>
 //----------
 #include "smpl/BlendShape.h"
@@ -197,7 +196,6 @@ private: // PIRVATE ATTRIBUTES
 
     std::string m__modelPath;
     std::string m__vertPath;
-    nlohmann::json m__model;
 
     torch::Tensor m__faceIndices;
     torch::Tensor m__shapeBlendBasis;
